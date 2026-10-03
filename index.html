@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Present Simple Visual Lab & Flowchart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at top left, #EEF2FF 0%, #F8FAFC 50%, #FDF2F8 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* Flowchart Node Glow & Transitions */
+        .flow-node {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .flow-node.active-node {
+            transform: scale(1.03);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25), 0 12px 24px -6px rgba(0, 0, 0, 0.12);
+            z-index: 10;
+        }
+        .flow-node.yes-match {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45), 0 14px 28px -6px rgba(16, 185, 129, 0.25);
+            border-color: #10B981 !important;
+        }
+        .flow-node.no-pass {
+            opacity: 0.4;
+            filter: grayscale(35%);
+        }
+
+        .connector-line {
+            transition: all 0.3s ease;
+            background-color: #CBD5E1;
+        }
+        .connector-line.lit-yes {
+            background-color: #10B981;
+            box-shadow: 0 0 12px #10B981;
+        }
+        .connector-line.lit-no {
+            background-color: #F59E0B;
+            box-shadow: 0 0 12px #F59E0B;
+        }
+
+        /* S-Magnet Animation for Doesn't */
+        @keyframes magnetSteal {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            45% { transform: translate(-55px, -22px) scale(1.35) rotate(-12deg); background-color: #EF4444; color: white; }
+            85% { transform: translate(-120px, 0) scale(1.05); opacity: 1; }
+            100% { transform: translate(-120px, 0) scale(0); opacity: 0; }
+        }
+        .s-flying {
+            animation: magnetSteal 0.95s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        /* Speaker Pulse on Instant Audio */
+        @keyframes audioPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .speaking-now {
+            animation: audioPulse 0.35s ease-in-out 2;
+            background-color: #4F46E5 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Smartboard Projector Mode */
+        body.smartboard-mode {
+            font-size: 115%;
+        }
+        body.smartboard-mode .max-w-7xl {
+            max-width: 96vw;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased pb-16">
+
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/90 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md">
+                    <span class="text-2xl">⚡</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            Zero-Delay Audio Ready
+                        </span>
+                    </div>
+                    <h1 class="font-display text-lg sm:text-2xl font-bold text-slate-900">
+                        Present Simple: <span class="text-indigo-600">3rd Person</span> & <span class="text-purple-600">Flowchart Lab</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex items-center gap-2.5 ml-auto">
+                <button onclick="speakInstant('Welcome to the Present Simple Lab!', this)" class="px-3 py-2 rounded-xl text-xs font-extrabold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1.5 cursor-pointer">
+                    <span>🔊</span>
+                    <span>Test Sound</span>
+                </button>
+                <button id="smartboard-btn" onclick="toggleSmartboardMode()" class="px-3 py-2 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                    <span>🖥️</span>
+                    <span class="hidden sm:inline">Smartboard</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 Ultra-Visual Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-slate-100 bg-slate-50/80">
+            <nav class="grid grid-cols-2 sm:grid-cols-4 gap-2 py-2" aria-label="Learning Steps">
+                <button onclick="switchStep(1)" id="tab-step-1" class="step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-indigo-600 text-white shadow-sm cursor-pointer">
+                    <span>🌍 1. Use & 3rd Person</span>
+                </button>
+                <button onclick="switchStep(2)" id="tab-step-2" class="step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+                    <span>🧩 2. Discover Rules</span>
+                </button>
+                <button onclick="switchStep(3)" id="tab-step-3" class="step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+                    <span>⚡ 3. Live Flowchart</span>
+                </button>
+                <button onclick="switchStep(4)" id="tab-step-4" class="step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer">
+                    <span>🏆 4. Quick Quiz</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+
+        <!-- ========================================================================= -->
+        <!-- STEP 1: PRESENT SIMPLE USE & WHO IS THE 3RD PERSON SINGULAR?              -->
+        <!-- ========================================================================= -->
+        <section id="step-1" class="step-section space-y-6">
+
+            <!-- PART A: WHEN DO WE USE PRESENT SIMPLE? (3 Giant Visual Cards) -->
+            <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200/90 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="px-3 py-1 rounded-full bg-indigo-600 text-white font-display font-bold text-xs uppercase tracking-wide">Part 1</span>
+                        <h2 class="font-display text-xl sm:text-2xl font-bold text-slate-900">When do we use Present Simple?</h2>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400">👆 Tap any card to hear it immediately!</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Use 1: Routines & Habits -->
+                    <div onclick="speakInstant('She wakes up at seven o clock.', this)" class="group cursor-pointer rounded-3xl p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 hover:border-amber-400 hover:shadow-md transition flex flex-col justify-between gap-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-4xl sm:text-5xl">⏰</span>
+                            <span class="w-9 h-9 rounded-full bg-white text-amber-600 shadow-sm flex items-center justify-center font-bold group-hover:scale-110 transition">🔊</span>
+                        </div>
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-amber-700">1. Routines & Habits</div>
+                            <div class="font-display text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">Every Day Actions</div>
+                        </div>
+                        <div class="bg-white px-4 py-3 rounded-2xl border border-amber-200 font-display text-base sm:text-lg font-bold text-slate-800">
+                            "She <span class="text-amber-600 underline decoration-2">wakes</span> up at 7:00."
+                        </div>
+                    </div>
+
+                    <!-- Use 2: Facts & Truths -->
+                    <div onclick="speakInstant('The sun rises in the east.', this)" class="group cursor-pointer rounded-3xl p-5 bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 hover:border-emerald-400 hover:shadow-md transition flex flex-col justify-between gap-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-4xl sm:text-5xl">🌍</span>
+                            <span class="w-9 h-9 rounded-full bg-white text-emerald-600 shadow-sm flex items-center justify-center font-bold group-hover:scale-110 transition">🔊</span>
+                        </div>
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">2. General Facts</div>
+                            <div class="font-display text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">100% True Things</div>
+                        </div>
+                        <div class="bg-white px-4 py-3 rounded-2xl border border-emerald-200 font-display text-base sm:text-lg font-bold text-slate-800">
+                            "The sun <span class="text-emerald-600 underline decoration-2">rises</span> in the east."
+                        </div>
+                    </div>
+
+                    <!-- Use 3: Permanent States & Schedules -->
+                    <div onclick="speakInstant('He lives in Ecuador.', this)" class="group cursor-pointer rounded-3xl p-5 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between gap-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-4xl sm:text-5xl">🏠</span>
+                            <span class="w-9 h-9 rounded-full bg-white text-indigo-600 shadow-sm flex items-center justify-center font-bold group-hover:scale-110 transition">🔊</span>
+                        </div>
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-700">3. Permanent Life</div>
+                            <div class="font-display text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">Where We Live & Work</div>
+                        </div>
+                        <div class="bg-white px-4 py-3 rounded-2xl border border-indigo-200 font-display text-base sm:text-lg font-bold text-slate-800">
+                            "He <span class="text-indigo-600 underline decoration-2">lives</span> in Ecuador."
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PART B: WHO IS THE 3RD PERSON SINGULAR? (Visual VIP Club) -->
+            <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200/90 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="px-3 py-1 rounded-full bg-pink-600 text-white font-display font-bold text-xs uppercase tracking-wide">Part 2</span>
+                        <h2 class="font-display text-xl sm:text-2xl font-bold text-slate-900">Who is the "3rd Person Singular"? (Only 1!)</h2>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">Click any person/pronoun below to test!</span>
+                </div>
+
+                <!-- Two Visual Zones: Base Team vs VIP 3rd Person Club -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <!-- Left: Group 1 (NO -S) -->
+                    <div id="zone-base" class="lg:col-span-5 rounded-3xl p-5 bg-slate-50 border-2 border-slate-200 flex flex-col justify-between space-y-4 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-slate-700 text-white text-xs font-extrabold uppercase">Group 1: Base Team</span>
+                            <span class="text-xs font-extrabold text-slate-500">NO -S Ending</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="testSubjectVIP('I', false, 'I play soccer. I do not play soccer.')" class="p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 font-display font-bold text-lg flex items-center gap-2 cursor-pointer shadow-sm">
+                                <span>🙋‍♂️</span> <span>I</span>
+                            </button>
+                            <button onclick="testSubjectVIP('You', false, 'You play soccer. You do not play soccer.')" class="p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 font-display font-bold text-lg flex items-center gap-2 cursor-pointer shadow-sm">
+                                <span>🫵</span> <span>You</span>
+                            </button>
+                            <button onclick="testSubjectVIP('We', false, 'We play soccer. We do not play soccer.')" class="p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 font-display font-bold text-lg flex items-center gap-2 cursor-pointer shadow-sm">
+                                <span>🧑‍🤝‍🧑</span> <span>We</span>
+                            </button>
+                            <button onclick="testSubjectVIP('They', false, 'They play soccer. They do not play soccer.')" class="p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-400 font-display font-bold text-lg flex items-center gap-2 cursor-pointer shadow-sm">
+                                <span>👥</span> <span>They</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 border border-slate-200 text-center space-y-1">
+                            <div class="font-display text-xl font-bold text-slate-800">
+                                ➕ Verb <span class="text-slate-400 text-sm">(play)</span> &nbsp;|&nbsp; ➖ <span class="text-blue-600">don't</span> play
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Group 2 (THE VIP 3RD PERSON SINGULAR CLUB) -->
+                    <div id="zone-vip" class="lg:col-span-7 rounded-3xl p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-300 flex flex-col justify-between space-y-4 shadow-sm transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3.5 py-1 rounded-full bg-gradient-to-r from-indigo-600 to-pink-600 text-white text-xs font-extrabold uppercase shadow-sm">
+                                👑 VIP 3rd Person Singular (ONLY 1 Person / Thing)
+                            </span>
+                            <span class="text-xs font-extrabold text-pink-600">🔊 Tap to Hear</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <!-- HE -->
+                            <button onclick="testSubjectVIP('He (Carlos)', true, 'He plays soccer. He does not play soccer.')" class="p-3.5 rounded-2xl bg-white border-2 border-indigo-200 hover:border-indigo-500 text-center space-y-1 cursor-pointer shadow-sm transition hover:-translate-y-0.5">
+                                <div class="text-3xl sm:text-4xl">👦</div>
+                                <div class="font-display font-bold text-lg sm:text-xl text-indigo-700">HE</div>
+                                <div class="text-[11px] font-bold text-slate-500">Carlos / My dad</div>
+                            </button>
+
+                            <!-- SHE -->
+                            <button onclick="testSubjectVIP('She (Maria)', true, 'She plays soccer. She does not play soccer.')" class="p-3.5 rounded-2xl bg-white border-2 border-pink-200 hover:border-pink-500 text-center space-y-1 cursor-pointer shadow-sm transition hover:-translate-y-0.5">
+                                <div class="text-3xl sm:text-4xl">👧</div>
+                                <div class="font-display font-bold text-lg sm:text-xl text-pink-600">SHE</div>
+                                <div class="text-[11px] font-bold text-slate-500">Maria / My mom</div>
+                            </button>
+
+                            <!-- IT -->
+                            <button onclick="testSubjectVIP('It (The dog)', true, 'It plays outside. It does not play outside.')" class="p-3.5 rounded-2xl bg-white border-2 border-emerald-200 hover:border-emerald-500 text-center space-y-1 cursor-pointer shadow-sm transition hover:-translate-y-0.5">
+                                <div class="text-3xl sm:text-4xl">🐶</div>
+                                <div class="font-display font-bold text-lg sm:text-xl text-emerald-600">IT</div>
+                                <div class="text-[11px] font-bold text-slate-500">1 Animal / 1 Object</div>
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 border-2 border-indigo-200 flex flex-wrap items-center justify-around gap-3 text-center">
+                            <div class="font-display text-lg sm:text-xl font-bold text-slate-900">
+                                ➕ Verb + <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700">-S</span> / <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700">-ES</span> / <span class="px-2 py-0.5 rounded-lg bg-pink-100 text-pink-700">-IES</span>
+                            </div>
+                            <div class="font-display text-lg sm:text-xl font-bold text-slate-900">
+                                ➖ <span class="px-2.5 py-0.5 rounded-lg bg-purple-600 text-white">doesn't</span> + Base Verb
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Subject Tester Bar -->
+                <div id="vip-tester-banner" class="rounded-2xl bg-slate-900 text-white p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🎯</span>
+                        <div id="vip-tester-output" class="font-display text-lg sm:text-xl font-bold">
+                            <span class="text-pink-400">She (Maria)</span> = 1 Female ➔ <span class="text-emerald-400">She plays</span> | <span class="text-purple-300">She doesn't play</span>
+                        </div>
+                    </div>
+                    <button onclick="switchStep(2)" class="px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-display font-bold text-sm shadow cursor-pointer">
+                        Next: Discover the Rules 🧩 ➔
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- STEP 2: VISUAL INDUCTIVE RULE DISCOVERY (LOW TEXT, PATTERN CHIPS)         -->
+        <!-- ========================================================================= -->
+        <section id="step-2" class="step-section hidden space-y-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200/90 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-display font-bold text-xs uppercase">Step 2: Student Inductive Lab</span>
+                        <h2 class="font-display text-xl sm:text-3xl font-bold text-slate-900 mt-1">Look at the Clues & Click the Rule! 🧩</h2>
+                    </div>
+                    <button onclick="autoUnlockAllRules()" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-display font-bold text-xs sm:text-sm cursor-pointer flex items-center gap-1.5">
+                        <span>✨ Reveal All 4 Rules</span>
+                    </button>
+                </div>
+
+                <!-- 4 Visual Inductive Pattern Cards (Minimal words, big equations) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <!-- CARD 1: -ES Clues -->
+                    <div id="ind-card-1" class="rounded-3xl p-5 border-2 border-amber-200 bg-amber-50/40 space-y-4 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-amber-500 text-white font-display font-bold text-xs uppercase">Clue Group 1</span>
+                            <button onclick="speakInstant('watches, washes, fixes, goes', this)" class="px-3 py-1 rounded-xl bg-white border border-amber-200 text-xs font-bold text-amber-800 cursor-pointer">🔊 Listen</button>
+                        </div>
+
+                        <!-- Visual Clues -->
+                        <div class="grid grid-cols-2 gap-2 text-center font-display font-bold text-base sm:text-lg">
+                            <div class="bg-white p-2.5 rounded-xl border border-amber-200">wat<span class="text-slate-400">ch</span> ➔ watch<span class="text-amber-600 underline">es</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-amber-200">wa<span class="text-slate-400">sh</span> ➔ wash<span class="text-amber-600 underline">es</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-amber-200">fi<span class="text-slate-400">x</span> ➔ fix<span class="text-amber-600 underline">es</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-amber-200">g<span class="text-slate-400">o</span> ➔ go<span class="text-amber-600 underline">es</span></div>
+                        </div>
+
+                        <!-- Inductive Question (Visual Equation) -->
+                        <div class="bg-white p-3.5 rounded-2xl border border-amber-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="font-display font-bold text-sm sm:text-base text-slate-800">
+                                Ends in <span class="text-amber-700 font-mono">-ch, -sh, -ss, -x, -o</span> ➔
+                            </div>
+                            <div class="flex gap-1.5" id="btn-group-1">
+                                <button onclick="pickRule(1, '-s', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ S</button>
+                                <button onclick="pickRule(1, '-es', true, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ ES</button>
+                                <button onclick="pickRule(1, '-ies', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ IES</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: -IES Clues (Consonant + Y) -->
+                    <div id="ind-card-2" class="rounded-3xl p-5 border-2 border-pink-200 bg-pink-50/40 space-y-4 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-pink-500 text-white font-display font-bold text-xs uppercase">Clue Group 2</span>
+                            <button onclick="speakInstant('studies, cries, flies', this)" class="px-3 py-1 rounded-xl bg-white border border-pink-200 text-xs font-bold text-pink-800 cursor-pointer">🔊 Listen</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-center font-display font-bold text-base sm:text-lg">
+                            <div class="bg-white p-2.5 rounded-xl border border-pink-200">stu<span class="text-pink-600">d</span>y ➔ stud<span class="text-pink-600 underline">ies</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-pink-200">c<span class="text-pink-600">r</span>y ➔ cr<span class="text-pink-600 underline">ies</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-pink-200">f<span class="text-pink-600">l</span>y ➔ fl<span class="text-pink-600 underline">ies</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-pink-200">t<span class="text-pink-600">r</span>y ➔ tr<span class="text-pink-600 underline">ies</span></div>
+                        </div>
+
+                        <div class="bg-white p-3.5 rounded-2xl border border-pink-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="font-display font-bold text-sm sm:text-base text-slate-800">
+                                <span class="text-pink-600">Consonant + Y</span> (<s>y</s>) ➔
+                            </div>
+                            <div class="flex gap-1.5" id="btn-group-2">
+                                <button onclick="pickRule(2, '-s', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ S</button>
+                                <button onclick="pickRule(2, '-es', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ ES</button>
+                                <button onclick="pickRule(2, '-ies', true, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ IES</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: -S Clues (General & Vowel + Y) -->
+                    <div id="ind-card-3" class="rounded-3xl p-5 border-2 border-emerald-200 bg-emerald-50/40 space-y-4 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-emerald-600 text-white font-display font-bold text-xs uppercase">Clue Group 3</span>
+                            <button onclick="speakInstant('works, eats, plays, buys', this)" class="px-3 py-1 rounded-xl bg-white border border-emerald-200 text-xs font-bold text-emerald-800 cursor-pointer">🔊 Listen</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-center font-display font-bold text-base sm:text-lg">
+                            <div class="bg-white p-2.5 rounded-xl border border-emerald-200">work ➔ work<span class="text-emerald-600 underline">s</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-emerald-200">eat ➔ eat<span class="text-emerald-600 underline">s</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-emerald-200">pl<span class="text-emerald-600">a</span>y ➔ play<span class="text-emerald-600 underline">s</span></div>
+                            <div class="bg-white p-2.5 rounded-xl border border-emerald-200">b<span class="text-emerald-600">u</span>y ➔ buy<span class="text-emerald-600 underline">s</span></div>
+                        </div>
+
+                        <div class="bg-white p-3.5 rounded-2xl border border-emerald-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="font-display font-bold text-sm sm:text-base text-slate-800">
+                                Most Verbs & <span class="text-emerald-700">Vowel + Y</span> ➔
+                            </div>
+                            <div class="flex gap-1.5" id="btn-group-3">
+                                <button onclick="pickRule(3, '-s', true, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ S</button>
+                                <button onclick="pickRule(3, '-es', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ ES</button>
+                                <button onclick="pickRule(3, '-ies', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">+ IES</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: Negative Auxiliaries (Don't / Doesn't Magnet) -->
+                    <div id="ind-card-4" class="rounded-3xl p-5 border-2 border-purple-200 bg-purple-50/40 space-y-4 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded-full bg-purple-600 text-white font-display font-bold text-xs uppercase">Clue Group 4: Negatives 🧲</span>
+                            <button onclick="speakInstant('She watches TV. She does not watch TV.', this)" class="px-3 py-1 rounded-xl bg-white border border-purple-200 text-xs font-bold text-purple-800 cursor-pointer">🔊 Listen</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-2 text-center font-display font-bold text-base sm:text-lg">
+                            <div class="bg-white p-2.5 rounded-xl border border-purple-200">
+                                ➕ She watch<span class="text-amber-600 underline">es</span> &nbsp;➔&nbsp; ➖ She <span class="text-purple-600 underline">doesn't</span> <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">watch</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-xl border border-purple-200">
+                                ➕ He stud<span class="text-pink-600 underline">ies</span> &nbsp;➔&nbsp; ➖ He <span class="text-purple-600 underline">doesn't</span> <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">study</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-3.5 rounded-2xl border border-purple-200 flex flex-wrap items-center justify-between gap-2">
+                            <div class="font-display font-bold text-sm sm:text-base text-slate-800">
+                                After <span class="text-purple-700">DOESN'T</span>, the verb is:
+                            </div>
+                            <div class="flex gap-1.5" id="btn-group-4">
+                                <button onclick="pickRule(4, 'base', true, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">Base (NO -s)</button>
+                                <button onclick="pickRule(4, 's', false, this)" class="px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm hover:bg-slate-100 cursor-pointer">Verb + S</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Navigation to Flowchart -->
+                <div class="flex justify-between items-center pt-2">
+                    <button onclick="switchStep(1)" class="px-4 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-100 cursor-pointer">← Back</button>
+                    <button onclick="switchStep(3)" class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-display font-bold text-base shadow-lg cursor-pointer">
+                        Open Live Flowchart ⚡ ➔
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- STEP 3: ULTRA-VISUAL DYNAMIC FLOWCHART (SPELLING & NEGATIVES)             -->
+        <!-- ========================================================================= -->
+        <section id="step-3" class="step-section hidden space-y-6">
+
+            <!-- Flowchart Switcher Header -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">⚡</span>
+                    <h2 class="font-display text-xl sm:text-2xl font-bold text-slate-900">Interactive Visual Flowchart</h2>
+                </div>
+
+                <div class="flex gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
+                    <button onclick="setFlowchartMode('spelling')" id="mode-btn-spelling" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition bg-indigo-600 text-white shadow-sm cursor-pointer">
+                        🔤 A: 3rd Person (-S / -ES / -IES)
+                    </button>
+                    <button onclick="setFlowchartMode('negative')" id="mode-btn-negative" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition text-slate-700 hover:bg-white cursor-pointer">
+                        🧲 B: Negatives (Don't / Doesn't)
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===================================================================== -->
+            <!-- FLOWCHART A: 3RD PERSON SPELLING (-S, -ES, -IES, HAS)                 -->
+            <!-- ===================================================================== -->
+            <div id="flowchart-spelling-container" class="space-y-5">
+
+                <!-- Top Verb Click Bar & Live Output -->
+                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-5 text-white shadow-xl">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <!-- Left: Subject + Quick Verb Buttons -->
+                        <div class="lg:col-span-7 space-y-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <select id="sim-subject" onchange="traceSpellingFlowchart(true)" class="px-3.5 py-2.5 rounded-2xl bg-indigo-600 border-2 border-indigo-400 text-white font-display font-bold text-base cursor-pointer">
+                                    <option value="She">👧 She (3rd Person)</option>
+                                    <option value="He">👦 He (3rd Person)</option>
+                                    <option value="It">🐶 It (3rd Person)</option>
+                                    <option value="They">👥 They (Plural)</option>
+                                    <option value="I">🙋‍♂️ I (1st Person)</option>
+                                </select>
+
+                                <input id="sim-verb-input" type="text" value="study" placeholder="Type verb..."
+                                    onkeydown="if(event.key==='Enter') traceSpellingFlowchart(true)"
+                                    class="w-36 sm:w-44 px-4 py-2.5 rounded-2xl bg-white/10 border-2 border-white/25 text-white font-display font-bold text-base focus:outline-none focus:border-amber-400">
+
+                                <button onclick="traceSpellingFlowchart(true)" class="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-display font-bold text-base shadow cursor-pointer">
+                                    ⚡ Trace
+                                </button>
+                            </div>
+
+                            <!-- 1-Click Visual Verb Chips (Instant Audio + Flowchart Trace) -->
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-xs font-extrabold uppercase text-indigo-300 mr-1">Tap a Verb:</span>
+                                <button onclick="quickTestVerb('She', 'work')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">work</button>
+                                <button onclick="quickTestVerb('He', 'play')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">play (a+y)</button>
+                                <button onclick="quickTestVerb('She', 'study')" class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/40 border border-pink-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">study (d+y)</button>
+                                <button onclick="quickTestVerb('He', 'cry')" class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/40 border border-pink-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">cry (r+y)</button>
+                                <button onclick="quickTestVerb('She', 'watch')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">watch (-ch)</button>
+                                <button onclick="quickTestVerb('He', 'wash')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">wash (-sh)</button>
+                                <button onclick="quickTestVerb('He', 'fix')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">fix (-x)</button>
+                                <button onclick="quickTestVerb('She', 'go')" class="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">go (-o)</button>
+                                <button onclick="quickTestVerb('She', 'have')" class="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">have 🌟</button>
+                                <button onclick="quickTestVerb('They', 'watch')" class="px-3 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/40 font-display font-bold text-xs sm:text-sm cursor-pointer">They + watch</button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Big Result Banner -->
+                        <div class="lg:col-span-5 bg-white/10 rounded-2xl p-4 border border-white/15 flex items-center justify-between gap-4">
+                            <div>
+                                <span id="sim-active-rule-badge" class="px-2.5 py-0.5 rounded-full bg-pink-500 text-white text-xs font-extrabold uppercase">
+                                    Consonant + Y ➔ -IES
+                                </span>
+                                <div id="sim-final-sentence" class="font-display text-2xl sm:text-4xl font-bold text-white mt-1">
+                                    She <span class="text-pink-400 underline">studies</span>
+                                </div>
+                                <div id="sim-explanation-text" class="text-xs font-bold text-indigo-200 mt-1">
+                                    study ➔ drop Y + IES = studies
+                                </div>
+                            </div>
+                            <button onclick="speakCurrentResult(this)" class="w-14 h-14 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white text-2xl flex items-center justify-center shadow-lg cursor-pointer shrink-0" title="Listen">
+                                🔊
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLEAN, ULTRA-VISUAL DECISION FLOWCHART DIAGRAM -->
+                <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200">
+                    <div class="max-w-4xl mx-auto space-y-1.5">
+
+                        <!-- STEP 1: SUBJECT CHECK -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            <div id="node-1" class="flow-node md:col-span-7 p-4 rounded-2xl border-2 border-indigo-200 bg-indigo-50/60 flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white font-display font-bold text-lg flex items-center justify-center shrink-0">1</div>
+                                <div>
+                                    <div class="text-[11px] font-extrabold uppercase text-indigo-600">Step 1: Subject</div>
+                                    <div class="font-display font-bold text-slate-900 text-lg sm:text-xl">
+                                        Is it <span class="text-indigo-700 underline">HE / SHE / IT</span> (1)? 👦👧🐶
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex items-center gap-2">
+                                <div id="line-1-no" class="connector-line h-2 w-8 rounded-full shrink-0"></div>
+                                <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-extrabold text-xs">NO</span>
+                                <div id="out-node-base" class="flow-node flex-1 p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 text-center">
+                                    <div class="text-xs font-extrabold text-slate-500">I / You / We / They</div>
+                                    <div class="font-display font-bold text-slate-900 text-lg">Keep <span class="text-indigo-600">BASE VERB</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 1 -> 2 -->
+                        <div class="grid grid-cols-1 md:grid-cols-12">
+                            <div class="md:col-span-7 flex flex-col items-center">
+                                <span class="text-[11px] font-extrabold text-emerald-700">YES ⬇</span>
+                                <div id="line-1-yes" class="connector-line w-2 h-5 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: IRREGULAR "HAVE" -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            <div id="node-2" class="flow-node md:col-span-7 p-4 rounded-2xl border-2 border-purple-200 bg-purple-50/50 flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-purple-600 text-white font-display font-bold text-lg flex items-center justify-center shrink-0">2</div>
+                                <div>
+                                    <div class="text-[11px] font-extrabold uppercase text-purple-600">Step 2: Irregular</div>
+                                    <div class="font-display font-bold text-slate-900 text-lg sm:text-xl">
+                                        Is the verb <span class="px-2 py-0.5 rounded bg-purple-200 text-purple-900">"HAVE"</span>? 🌟
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex items-center gap-2">
+                                <div id="line-2-yes" class="connector-line h-2 w-8 rounded-full shrink-0"></div>
+                                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-xs">YES</span>
+                                <div id="out-node-has" class="flow-node flex-1 p-3.5 rounded-2xl border-2 border-purple-300 bg-purple-50 text-center">
+                                    <div class="font-display font-bold text-slate-900 text-lg">
+                                        have ➔ <span class="px-2.5 py-0.5 rounded-lg bg-purple-600 text-white">HAS</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 2 -> 3 -->
+                        <div class="grid grid-cols-1 md:grid-cols-12">
+                            <div class="md:col-span-7 flex flex-col items-center">
+                                <span class="text-[11px] font-extrabold text-amber-700">NO ⬇</span>
+                                <div id="line-2-no" class="connector-line w-2 h-5 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: -CH, -SH, -SS, -X, -Z, -O -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            <div id="node-3" class="flow-node md:col-span-7 p-4 rounded-2xl border-2 border-amber-200 bg-amber-50/50 flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white font-display font-bold text-lg flex items-center justify-center shrink-0">3</div>
+                                <div>
+                                    <div class="text-[11px] font-extrabold uppercase text-amber-700">Step 3: Special Endings</div>
+                                    <div class="font-display font-bold text-slate-900 text-lg sm:text-xl">
+                                        Ends in <span class="text-amber-700 underline">-CH, -SH, -SS, -X, -O</span>?
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex items-center gap-2">
+                                <div id="line-3-yes" class="connector-line h-2 w-8 rounded-full shrink-0"></div>
+                                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-xs">YES</span>
+                                <div id="out-node-es" class="flow-node flex-1 p-3.5 rounded-2xl border-2 border-amber-300 bg-amber-50 text-center">
+                                    <div class="font-display font-bold text-slate-900 text-lg">
+                                        Add <span class="px-2.5 py-0.5 rounded-lg bg-amber-500 text-white">+ ES</span>
+                                    </div>
+                                    <div class="text-xs font-bold text-amber-800">watches • fixes • goes</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 3 -> 4 -->
+                        <div class="grid grid-cols-1 md:grid-cols-12">
+                            <div class="md:col-span-7 flex flex-col items-center">
+                                <span class="text-[11px] font-extrabold text-amber-700">NO ⬇</span>
+                                <div id="line-3-no" class="connector-line w-2 h-5 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 4: CONSONANT + Y -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            <div id="node-4" class="flow-node md:col-span-7 p-4 rounded-2xl border-2 border-pink-200 bg-pink-50/50 flex items-center gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-pink-500 text-white font-display font-bold text-lg flex items-center justify-center shrink-0">4</div>
+                                <div>
+                                    <div class="text-[11px] font-extrabold uppercase text-pink-600">Step 4: Letter -Y</div>
+                                    <div class="font-display font-bold text-slate-900 text-lg sm:text-xl">
+                                        Ends in <span class="text-pink-600 underline">CONSONANT + Y</span>?
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex items-center gap-2">
+                                <div id="line-4-yes" class="connector-line h-2 w-8 rounded-full shrink-0"></div>
+                                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold text-xs">YES</span>
+                                <div id="out-node-ies" class="flow-node flex-1 p-3.5 rounded-2xl border-2 border-pink-300 bg-pink-50 text-center">
+                                    <div class="font-display font-bold text-slate-900 text-lg">
+                                        <s>Y</s> ➔ <span class="px-2.5 py-0.5 rounded-lg bg-pink-500 text-white">+ IES</span>
+                                    </div>
+                                    <div class="text-xs font-bold text-pink-800">study ➔ studies</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 4 -> 5 -->
+                        <div class="grid grid-cols-1 md:grid-cols-12">
+                            <div class="md:col-span-7 flex flex-col items-center">
+                                <span class="text-[11px] font-extrabold text-amber-700">NO (All Other Verbs & Vowel + Y) ⬇</span>
+                                <div id="line-4-no" class="connector-line w-2 h-5 rounded-full"></div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 5: DEFAULT +S -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                            <div id="out-node-s" class="flow-node md:col-span-7 p-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 flex items-center justify-between">
+                                <div class="flex items-center gap-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-display font-bold text-lg flex items-center justify-center shrink-0">5</div>
+                                    <div>
+                                        <div class="text-[11px] font-extrabold uppercase text-emerald-700">Step 5: Default Rule</div>
+                                        <div class="font-display font-bold text-slate-900 text-lg sm:text-xl">
+                                            Just Add <span class="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white">+ S</span> 🎯
+                                        </div>
+                                        <div class="text-xs font-bold text-emerald-800">works • eats • plays (vowel + y)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================================== -->
+            <!-- FLOWCHART B: NEGATIVE AUXILIARIES (DON'T VS DOESN'T)                  -->
+            <!-- ===================================================================== -->
+            <div id="flowchart-negative-container" class="hidden space-y-5">
+
+                <!-- Interactive Magnet Simulator -->
+                <div class="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 rounded-3xl p-5 text-white shadow-xl">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <div class="lg:col-span-6 space-y-3">
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-purple-300">🧲 Negative Auxiliary Magnet</div>
+                            <h3 class="font-display text-xl sm:text-2xl font-bold">DOESN'T Steals the -S!</h3>
+                            <div class="flex flex-wrap gap-2.5">
+                                <select id="neg-subject" onchange="updateNegativeFlowchart(true)" class="px-3.5 py-2.5 rounded-2xl bg-purple-600 border-2 border-purple-400 text-white font-display font-bold text-base cursor-pointer">
+                                    <option value="She">👧 She (3rd Person)</option>
+                                    <option value="He">👦 He (3rd Person)</option>
+                                    <option value="They">👥 They (Plural)</option>
+                                    <option value="I">🙋‍♂️ I (1st Person)</option>
+                                </select>
+
+                                <select id="neg-verb" onchange="updateNegativeFlowchart(true)" class="px-3.5 py-2.5 rounded-2xl bg-white/10 border-2 border-white/25 text-white font-display font-bold text-base cursor-pointer">
+                                    <option value="watch">watch (watches)</option>
+                                    <option value="study">study (studies)</option>
+                                    <option value="play">play (plays)</option>
+                                    <option value="have">have (has)</option>
+                                </select>
+
+                                <button onclick="triggerMagnetAnimation(true)" class="px-4 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-display font-bold text-sm cursor-pointer">
+                                    🧲 Replay Magnet
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-6 bg-white/10 rounded-2xl p-4 border border-white/15 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase text-emerald-300">➕ Affirmative</span>
+                                <div id="neg-stage-aff" class="font-display text-xl font-bold">She <span class="text-amber-400 underline">watches</span></div>
+                            </div>
+                            <div class="bg-purple-950/90 p-3.5 rounded-xl border border-purple-400/50 flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase text-purple-300">➖ Negative</span>
+                                <div id="neg-stage-neg" class="font-display text-xl sm:text-2xl font-bold flex items-center gap-2"></div>
+                                <button onclick="speakNegativeComparison(this)" class="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center cursor-pointer">🔊</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Flowchart Diagram for DON'T vs DOESN'T -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                    <div class="max-w-4xl mx-auto space-y-4">
+                        <div class="p-4 rounded-2xl border-2 border-indigo-300 bg-indigo-50 text-center max-w-md mx-auto">
+                            <div class="text-xs font-extrabold uppercase text-indigo-600">Negative Flowchart</div>
+                            <div class="font-display text-xl font-bold text-slate-900">Who is the Subject?</div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- DON'T BRANCH -->
+                            <div id="neg-branch-dont" class="flow-node rounded-3xl border-2 border-blue-300 bg-blue-50/50 p-5 text-center space-y-3">
+                                <div class="text-3xl">🙋‍♂️ 🫵 🧑‍🤝‍🧑 👥</div>
+                                <div class="font-display text-xl font-bold text-slate-900">I • You • We • They</div>
+                                <div class="bg-white p-4 rounded-2xl border-2 border-blue-400 font-display text-xl sm:text-2xl font-bold">
+                                    <span class="text-blue-600">DON'T</span> + <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-lg">Base Verb</span>
+                                </div>
+                                <div class="font-display font-bold text-slate-700">They <span class="text-blue-600">don't</span> watch.</div>
+                            </div>
+
+                            <!-- DOESN'T BRANCH -->
+                            <div id="neg-branch-doesnt" class="flow-node rounded-3xl border-2 border-purple-300 bg-purple-50/50 p-5 text-center space-y-3">
+                                <div class="text-3xl">👦 👧 🐶 (Only 1)</div>
+                                <div class="font-display text-xl font-bold text-slate-900">He • She • It</div>
+                                <div class="bg-white p-4 rounded-2xl border-2 border-purple-400 font-display text-xl sm:text-2xl font-bold">
+                                    <span class="text-purple-600">DOESN'T</span> + <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-lg">Base Verb</span>
+                                </div>
+                                <div class="font-display font-bold text-slate-700">
+                                    She <span class="text-purple-600">doesn't</span> watch. <span class="text-rose-600 text-xs">(NO -es!)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- STEP 4: QUICK VISUAL QUIZ ARENA                                           -->
+        <!-- ========================================================================= -->
+        <section id="step-4" class="step-section hidden space-y-6">
+            <div class="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-slate-200 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-display font-bold text-xs uppercase">Step 4: Fast Practice</span>
+                        <h2 class="font-display text-2xl font-bold text-slate-900 mt-1">Flowchart Speed Quiz 🏆</h2>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 text-center">
+                            <div class="text-[10px] font-extrabold uppercase text-indigo-500">Score</div>
+                            <div id="quiz-score" class="font-display text-xl font-bold text-indigo-700">0 / 8</div>
+                        </div>
+                        <button onclick="resetQuiz()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-display font-bold text-xs text-slate-700 cursor-pointer">
+                            🔄 Restart
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quiz-card" class="max-w-2xl mx-auto bg-slate-50 rounded-3xl p-6 border-2 border-slate-200 space-y-5">
+                    <div class="flex items-center justify-between text-xs font-extrabold text-slate-500 uppercase">
+                        <span id="quiz-q-number">Question 1 / 8</span>
+                        <span id="quiz-q-category" class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Rule Check</span>
+                    </div>
+
+                    <div id="quiz-prompt" class="font-display text-2xl sm:text-3xl font-bold text-slate-900 text-center py-2"></div>
+
+                    <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+                    <div id="quiz-explanation" class="hidden rounded-2xl p-4 border-2 font-display font-bold text-base text-center"></div>
+
+                    <div class="flex justify-end">
+                        <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-display font-bold text-base shadow cursor-pointer">
+                            Next ➔
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* ============================================================================
+         * 1. ZERO-DELAY AUDIO ENGINE (Web Audio Synth + Pre-Cached SpeechSynthesis)
+         * ============================================================================ */
+        let audioCtx = null;
+        let cachedEnglishVoice = null;
+
+        function initZeroDelayAudio() {
+            if ('speechSynthesis' in window) {
+                const loadVoices = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices.length > 0) {
+                        cachedEnglishVoice =
+                            voices.find(v => v.lang === 'en-US' && v.localService) ||
+                            voices.find(v => v.lang.startsWith('en-') && v.localService) ||
+                            voices.find(v => v.lang.startsWith('en')) ||
+                            voices[0];
+                    }
+                };
+                loadVoices();
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+
+        // Instant 0ms tactile audio pop/chime so students NEVER experience silence/lag
+        function playInstantTone(type = 'pop') {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'success') {
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.07); // E5
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (type === 'error') {
+                    osc.frequency.setValueAtTime(220, now);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } else {
+                    // Crisp pop at 0ms
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(587.33, now + 0.055);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+                    osc.start(now);
+                    osc.stop(now + 0.065);
+                }
+            } catch (e) {}
+        }
+
+        // Instant Speech Function with 0ms UI + Synth Response
+        function speakInstant(text, btnEl = null) {
+            playInstantTone('pop');
+
+            if (btnEl) {
+                btnEl.classList.remove('speaking-now');
+                void btnEl.offsetWidth;
+                btnEl.classList.add('speaking-now');
+                setTimeout(() => btnEl.classList.remove('speaking-now'), 700);
+            }
+
+            if (!('speechSynthesis' in window)) return;
+
+            try {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                if (cachedEnglishVoice) {
+                    u.voice = cachedEnglishVoice;
+                }
+                u.lang = 'en-US';
+                u.rate = 0.98;
+                u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
+            } catch (err) {}
+        }
+
+        /* ============================================================================
+         * 2. NAVIGATION & STEP 1 VIP TESTER
+         * ============================================================================ */
+        function switchStep(stepNum) {
+            playInstantTone('pop');
+            document.querySelectorAll('.step-section').forEach((sec, idx) => {
+                sec.classList.toggle('hidden', idx + 1 !== stepNum);
+            });
+
+            for (let i = 1; i <= 4; i++) {
+                const tab = document.getElementById(`tab-step-${i}`);
+                if (i === stepNum) {
+                    tab.className = "step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-indigo-600 text-white shadow-sm cursor-pointer";
+                } else {
+                    tab.className = "step-tab flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-display font-bold text-sm sm:text-base transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer";
+                }
+            }
+
+            if (stepNum === 3) {
+                traceSpellingFlowchart(false);
+                updateNegativeFlowchart(false);
+            }
+        }
+
+        function toggleSmartboardMode() {
+            playInstantTone('pop');
+            document.body.classList.toggle('smartboard-mode');
+        }
+
+        function testSubjectVIP(label, isVIP, speechText) {
+            speakInstant(speechText);
+            const out = document.getElementById('vip-tester-output');
+            const zoneBase = document.getElementById('zone-base');
+            const zoneVip = document.getElementById('zone-vip');
+
+            zoneBase.classList.toggle('ring-4', !isVIP);
+            zoneBase.classList.toggle('ring-blue-400', !isVIP);
+            zoneVip.classList.toggle('ring-4', isVIP);
+            zoneVip.classList.toggle('ring-pink-400', isVIP);
+
+            if (isVIP) {
+                out.innerHTML = `👑 <span class="text-pink-400">${label}</span> = 3rd Person Singular! ➔ <span class="text-emerald-400">plays (+S)</span> | <span class="text-purple-300">doesn't play</span>`;
+            } else {
+                out.innerHTML = `👥 <span class="text-blue-300">${label}</span> = Base Group ➔ <span class="text-white">play (NO -S)</span> | <span class="text-blue-300">don't play</span>`;
+            }
+        }
+
+        /* ============================================================================
+         * 3. STEP 2: VISUAL INDUCTIVE RULE PICKER
+         * ============================================================================ */
+        function pickRule(cardNum, val, isCorrect, btn) {
+            const group = document.getElementById(`btn-group-${cardNum}`);
+            const card = document.getElementById(`ind-card-${cardNum}`);
+
+            Array.from(group.children).forEach(b => {
+                b.className = "px-3 py-1.5 rounded-xl border-2 border-slate-200 font-display font-bold text-sm bg-white text-slate-700 cursor-pointer";
+            });
+
+            if (isCorrect) {
+                playInstantTone('success');
+                btn.className = "px-3 py-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-500 text-white font-display font-bold text-sm shadow cursor-pointer";
+                card.classList.remove('ring-4', 'ring-rose-300');
+                card.classList.add('ring-4', 'ring-emerald-400');
+            } else {
+                playInstantTone('error');
+                btn.className = "px-3 py-1.5 rounded-xl border-2 border-rose-500 bg-rose-500 text-white font-display font-bold text-sm cursor-pointer";
+                card.classList.remove('ring-4', 'ring-emerald-400');
+                card.classList.add('ring-4', 'ring-rose-300');
+            }
+        }
+
+        function autoUnlockAllRules() {
+            const correctButtons = [
+                document.querySelector('#btn-group-1 button:nth-child(2)'),
+                document.querySelector('#btn-group-2 button:nth-child(3)'),
+                document.querySelector('#btn-group-3 button:nth-child(1)'),
+                document.querySelector('#btn-group-4 button:nth-child(1)')
+            ];
+            correctButtons.forEach((btn, idx) => {
+                if (btn) pickRule(idx + 1, '', true, btn);
+            });
+            speakInstant('All four grammar rules unlocked!');
+        }
+
+        /* ============================================================================
+         * 4. STEP 3: INTERACTIVE FLOWCHART ENGINE (A & B)
+         * ============================================================================ */
+        let lastSpokenSentence = "She studies.";
+
+        function setFlowchartMode(mode) {
+            playInstantTone('pop');
+            const spellingBox = document.getElementById('flowchart-spelling-container');
+            const negBox = document.getElementById('flowchart-negative-container');
+            const btnSpelling = document.getElementById('mode-btn-spelling');
+            const btnNeg = document.getElementById('mode-btn-negative');
+
+            if (mode === 'spelling') {
+                spellingBox.classList.remove('hidden');
+                negBox.classList.add('hidden');
+                btnSpelling.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition bg-indigo-600 text-white shadow-sm cursor-pointer";
+                btnNeg.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition text-slate-700 hover:bg-white cursor-pointer";
+                traceSpellingFlowchart(false);
+            } else {
+                spellingBox.classList.add('hidden');
+                negBox.classList.remove('hidden');
+                btnNeg.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition bg-purple-600 text-white shadow-sm cursor-pointer";
+                btnSpelling.className = "flex-1 sm:flex-initial px-4 py-2 rounded-xl font-display font-bold text-sm transition text-slate-700 hover:bg-white cursor-pointer";
+                updateNegativeFlowchart(false);
+            }
+        }
+
+        function quickTestVerb(subj, verb) {
+            document.getElementById('sim-subject').value = subj;
+            document.getElementById('sim-verb-input').value = verb;
+            traceSpellingFlowchart(true);
+        }
+
+        function traceSpellingFlowchart(shouldSpeak = false) {
+            const subj = document.getElementById('sim-subject').value;
+            let rawVerb = (document.getElementById('sim-verb-input').value || 'work').trim().toLowerCase();
+            rawVerb = rawVerb.split(/\s+/)[0].replace(/[^a-z]/g, '') || 'work';
+
+            const isThirdPerson = ['He', 'She', 'It'].includes(subj);
+
+            const nodeIds = ['node-1', 'node-2', 'node-3', 'node-4', 'out-node-base', 'out-node-has', 'out-node-es', 'out-node-ies', 'out-node-s'];
+            nodeIds.forEach(id => {
+                document.getElementById(id).classList.remove('active-node', 'yes-match', 'no-pass');
+            });
+            const lineIds = ['line-1-no', 'line-1-yes', 'line-2-yes', 'line-2-no', 'line-3-yes', 'line-3-no', 'line-4-yes', 'line-4-no'];
+            lineIds.forEach(id => {
+                document.getElementById(id).classList.remove('lit-yes', 'lit-no');
+            });
+
+            let finalVerbHtml = rawVerb;
+            let plainFinalVerb = rawVerb;
+            let badgeText = '';
+            let badgeClass = '';
+            let explanation = '';
+
+            document.getElementById('node-1').classList.add('active-node');
+
+            if (!isThirdPerson) {
+                document.getElementById('line-1-no').classList.add('lit-no');
+                document.getElementById('out-node-base').classList.add('active-node', 'yes-match');
+                ['node-2', 'node-3', 'node-4', 'out-node-has', 'out-node-es', 'out-node-ies', 'out-node-s'].forEach(id => {
+                    document.getElementById(id).classList.add('no-pass');
+                });
+
+                finalVerbHtml = `<span class="text-indigo-300 underline">${rawVerb}</span>`;
+                plainFinalVerb = rawVerb;
+                badgeText = 'Group 1 ➔ Base Verb';
+                badgeClass = 'bg-indigo-500 text-white';
+                explanation = `${subj} + ${rawVerb} (NO -s)`;
+            } else {
+                document.getElementById('line-1-yes').classList.add('lit-yes');
+                document.getElementById('out-node-base').classList.add('no-pass');
+                document.getElementById('node-2').classList.add('active-node');
+
+                if (rawVerb === 'have') {
+                    document.getElementById('line-2-yes').classList.add('lit-yes');
+                    document.getElementById('out-node-has').classList.add('active-node', 'yes-match');
+                    ['node-3', 'node-4', 'out-node-es', 'out-node-ies', 'out-node-s'].forEach(id => {
+                        document.getElementById(id).classList.add('no-pass');
+                    });
+
+                    finalVerbHtml = `<span class="text-purple-300 underline">has</span>`;
+                    plainFinalVerb = 'has';
+                    badgeText = 'Irregular ➔ HAS';
+                    badgeClass = 'bg-purple-500 text-white';
+                    explanation = `have ➔ has`;
+                } else {
+                    document.getElementById('line-2-no').classList.add('lit-no');
+                    document.getElementById('out-node-has').classList.add('no-pass');
+                    document.getElementById('node-3').classList.add('active-node');
+
+                    if (/(ch|sh|ss|x|z|o|s)$/.test(rawVerb)) {
+                        document.getElementById('line-3-yes').classList.add('lit-yes');
+                        document.getElementById('out-node-es').classList.add('active-node', 'yes-match');
+                        ['node-4', 'out-node-ies', 'out-node-s'].forEach(id => {
+                            document.getElementById(id).classList.add('no-pass');
+                        });
+
+                        plainFinalVerb = rawVerb + 'es';
+                        finalVerbHtml = `${rawVerb}<span class="text-amber-400 underline">es</span>`;
+                        badgeText = 'Ends in -ch/-sh/-x/-o ➔ +ES';
+                        badgeClass = 'bg-amber-500 text-slate-950';
+                        explanation = `${rawVerb} + es = ${plainFinalVerb}`;
+                    } else {
+                        document.getElementById('line-3-no').classList.add('lit-no');
+                        document.getElementById('out-node-es').classList.add('no-pass');
+                        document.getElementById('node-4').classList.add('active-node');
+
+                        if (/[^aeiou]y$/.test(rawVerb)) {
+                            document.getElementById('line-4-yes').classList.add('lit-yes');
+                            document.getElementById('out-node-ies').classList.add('active-node', 'yes-match');
+                            document.getElementById('out-node-s').classList.add('no-pass');
+
+                            const stem = rawVerb.slice(0, -1);
+                            plainFinalVerb = stem + 'ies';
+                            finalVerbHtml = `${stem}<span class="text-pink-400 underline">ies</span>`;
+                            badgeText = 'Consonant + Y ➔ +IES';
+                            badgeClass = 'bg-pink-500 text-white';
+                            explanation = `${rawVerb} (drop y) + ies = ${plainFinalVerb}`;
+                        } else {
+                            document.getElementById('line-4-no').classList.add('lit-no');
+                            document.getElementById('out-node-ies').classList.add('no-pass');
+                            document.getElementById('out-node-s').classList.add('active-node', 'yes-match');
+
+                            plainFinalVerb = rawVerb + 's';
+                            finalVerbHtml = `${rawVerb}<span class="text-emerald-400 underline">s</span>`;
+                            badgeText = 'Default Rule ➔ +S';
+                            badgeClass = 'bg-emerald-500 text-slate-950';
+                            explanation = `${rawVerb} + s = ${plainFinalVerb}`;
+                        }
+                    }
+                }
+            }
+
+            const badgeEl = document.getElementById('sim-active-rule-badge');
+            badgeEl.className = `px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase ${badgeClass}`;
+            badgeEl.textContent = badgeText;
+
+            document.getElementById('sim-final-sentence').innerHTML = `${subj} ${finalVerbHtml}`;
+            document.getElementById('sim-explanation-text').textContent = explanation;
+            lastSpokenSentence = `${subj} ${plainFinalVerb}.`;
+
+            if (shouldSpeak) {
+                speakInstant(lastSpokenSentence);
+            }
+        }
+
+        function speakCurrentResult(btn) {
+            speakInstant(lastSpokenSentence, btn);
+        }
+
+        /* ============================================================================
+         * 5. FLOWCHART B: NEGATIVE MAGNET LOGIC
+         * ============================================================================ */
+        let currentNegSpeech = "She does not watch.";
+
+        function updateNegativeFlowchart(shouldSpeak = false) {
+            const subj = document.getElementById('neg-subject').value;
+            const verb = document.getElementById('neg-verb').value;
+            const isThird = ['She', 'He'].includes(subj);
+
+            const thirdForms = { watch: 'watches', study: 'studies', play: 'plays', have: 'has' };
+            const affVerb = isThird ? thirdForms[verb] : verb;
+            const aux = isThird ? "doesn't" : "don't";
+
+            document.getElementById('neg-stage-aff').innerHTML = `${subj} <span class="text-amber-400 underline">${affVerb}</span>`;
+
+            const negStage = document.getElementById('neg-stage-neg');
+            if (isThird) {
+                negStage.innerHTML = `
+                    <span>${subj}</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-purple-600 text-white">doesn't</span>
+                    <span class="text-emerald-300 underline">${verb}</span>
+                    <span id="flying-s-badge" class="inline-block px-1.5 py-0.5 text-xs rounded bg-rose-500 text-white font-mono">-s</span>
+                `;
+                triggerMagnetAnimation(false);
+            } else {
+                negStage.innerHTML = `
+                    <span>${subj}</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-blue-600 text-white">don't</span>
+                    <span class="text-emerald-300 underline">${verb}</span>
+                `;
+            }
+
+            document.getElementById('neg-branch-dont').classList.toggle('active-node', !isThird);
+            document.getElementById('neg-branch-dont').classList.toggle('no-pass', isThird);
+            document.getElementById('neg-branch-doesnt').classList.toggle('active-node', isThird);
+            document.getElementById('neg-branch-doesnt').classList.toggle('no-pass', !isThird);
+
+            currentNegSpeech = `${subj} ${aux} ${verb}.`;
+            if (shouldSpeak) {
+                speakInstant(currentNegSpeech);
+            }
+        }
+
+        function triggerMagnetAnimation(shouldSpeak = false) {
+            const badge = document.getElementById('flying-s-badge');
+            if (!badge) {
+                document.getElementById('neg-subject').value = 'She';
+                updateNegativeFlowchart(shouldSpeak);
+                return;
+            }
+            badge.classList.remove('s-flying');
+            void badge.offsetWidth;
+            badge.classList.add('s-flying');
+            if (shouldSpeak) speakInstant(currentNegSpeech);
+        }
+
+        function speakNegativeComparison(btn) {
+            speakInstant(currentNegSpeech, btn);
+        }
+
+        /* ============================================================================
+         * 6. STEP 4: VISUAL SPEED QUIZ
+         * ============================================================================ */
+        const quizQuestions = [
+            {
+                category: 'Consonant + Y vs Vowel + Y',
+                prompt: '👧 Maria _______ (study) & 👦 Leo _______ (play).',
+                options: ['studies / plays', 'studys / plays', 'studies / plaies', 'study / play'],
+                correct: 0,
+                speech: 'Maria studies and Leo plays.',
+                rule: 'd + y ➔ studies (-IES) | a + y ➔ plays (+S)'
+            },
+            {
+                category: 'The Doesn\'t Magnet 🧲',
+                prompt: '👧 She _______ (not / watch) TV.',
+                options: ["doesn't watches", "don't watch", "doesn't watch", "doesn't watchs"],
+                correct: 2,
+                speech: 'She does not watch TV.',
+                rule: 'She + DOESN\'T + watch (Base Verb!)'
+            },
+            {
+                category: '-X and -SH Endings',
+                prompt: '👦 He _______ (fix) cars and _______ (wash) hands.',
+                options: ['fixs / washs', 'fixes / washes', 'fixies / washies', 'fix / wash'],
+                correct: 1,
+                speech: 'He fixes cars and washes hands.',
+                rule: 'Ends in -x / -sh ➔ Add -ES!'
+            },
+            {
+                category: 'Irregular HAVE 🌟',
+                prompt: '👧 Sara _______ (have) a cat, she _______ (not / have) a dog.',
+                options: ["haves / doesn't have", "has / doesn't has", "has / doesn't have", "have / don't have"],
+                correct: 2,
+                speech: 'Sara has a cat, she does not have a dog.',
+                rule: 'Affirmative: HAS | Negative: doesn\'t HAVE'
+            },
+            {
+                category: 'Plural Subject 👥',
+                prompt: '👥 They _______ (go) to school & _______ (not / work).',
+                options: ["goes / doesn't work", "go / don't work", "gos / don't works", "go / doesn't work"],
+                correct: 1,
+                speech: 'They go to school and do not work.',
+                rule: 'They = Plural ➔ Base Verb (go) + don\'t work'
+            },
+            {
+                category: 'Ends in -O',
+                prompt: '👦 My brother _______ (do) homework and _______ (go) home.',
+                options: ['dos / gos', 'does / goes', 'do / go', 'does / gos'],
+                correct: 1,
+                speech: 'My brother does homework and goes home.',
+                rule: 'Ends in -O ➔ Add -ES (does, goes)'
+            },
+            {
+                category: 'Consonant + Y',
+                prompt: '🦅 The bird _______ (fly) and 👶 the baby _______ (cry).',
+                options: ['flys / crys', 'flies / cries', 'flies / crys', 'flyes / cryes'],
+                correct: 1,
+                speech: 'The bird flies and the baby cries.',
+                rule: 'Consonant + Y ➔ Drop Y, add -IES!'
+            },
+            {
+                category: '3rd Person Negative 🧲',
+                prompt: 'Pick the 100% CORRECT sentence:',
+                options: [
+                    "He don't likes pizza.",
+                    "He doesn't likes pizza.",
+                    "He doesn't like pizza.",
+                    "He not like pizza."
+                ],
+                correct: 2,
+                speech: 'He does not like pizza.',
+                rule: 'He + doesn\'t + like (NO -s on like!)'
+            }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizScore = 0;
+
+        function renderQuizQuestion() {
+            const q = quizQuestions[currentQuizIndex];
+            document.getElementById('quiz-q-number').textContent = `Question ${currentQuizIndex + 1} / ${quizQuestions.length}`;
+            document.getElementById('quiz-q-category').textContent = q.category;
+            document.getElementById('quiz-prompt').textContent = q.prompt;
+
+            const optionsEl = document.getElementById('quiz-options');
+            optionsEl.innerHTML = q.options.map((opt, idx) => `
+                <button onclick="selectQuizAnswer(${idx})" id="quiz-opt-${idx}" class="p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-400 font-display font-bold text-lg text-slate-800 transition flex items-center justify-between cursor-pointer">
+                    <span>${opt}</span>
+                    <span class="w-7 h-7 rounded-full bg-slate-100 text-xs flex items-center justify-center">${String.fromCharCode(65 + idx)}</span>
+                </button>
+            `).join('');
+
+            document.getElementById('quiz-explanation').classList.add('hidden');
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+        }
+
+        function selectQuizAnswer(selectedIdx) {
+            const q = quizQuestions[currentQuizIndex];
+            const isCorrect = selectedIdx === q.correct;
+
+            q.options.forEach((_, idx) => {
+                const btn = document.getElementById(`quiz-opt-${idx}`);
+                btn.onclick = null;
+                if (idx === q.correct) {
+                    btn.className = "p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 font-display font-bold text-lg text-emerald-900 flex items-center justify-between";
+                } else if (idx === selectedIdx && !isCorrect) {
+                    btn.className = "p-4 rounded-2xl border-2 border-rose-400 bg-rose-50 font-display font-bold text-lg text-rose-900 flex items-center justify-between";
+                } else {
+                    btn.classList.add('opacity-40');
+                }
+            });
+
+            const expEl = document.getElementById('quiz-explanation');
+            expEl.classList.remove('hidden', 'border-emerald-300', 'bg-emerald-50', 'text-emerald-900', 'border-rose-300', 'bg-rose-50', 'text-rose-900');
+
+            if (isCorrect) {
+                quizScore++;
+                speakInstant(q.speech);
+                expEl.classList.add('border-emerald-300', 'bg-emerald-50', 'text-emerald-900');
+                expEl.innerHTML = `✅ ${q.rule}`;
+            } else {
+                playInstantTone('error');
+                expEl.classList.add('border-rose-300', 'bg-rose-50', 'text-rose-900');
+                expEl.innerHTML = `💡 ${q.rule}`;
+            }
+
+            document.getElementById('quiz-score').textContent = `${quizScore} / ${quizQuestions.length}`;
+            const nextBtn = document.getElementById('quiz-next-btn');
+            nextBtn.classList.remove('hidden');
+            nextBtn.textContent = currentQuizIndex < quizQuestions.length - 1 ? 'Next ➔' : 'Finish 🏆';
+        }
+
+        function nextQuizQuestion() {
+            playInstantTone('pop');
+            if (currentQuizIndex < quizQuestions.length - 1) {
+                currentQuizIndex++;
+                renderQuizQuestion();
+            } else {
+                speakInstant(`Great job! Your score is ${quizScore} out of ${quizQuestions.length}`);
+                document.getElementById('quiz-card').innerHTML = `
+                    <div class="text-center py-6 space-y-4">
+                        <div class="text-6xl">🏆</div>
+                        <h3 class="font-display text-3xl font-bold text-slate-900">${quizScore} / ${quizQuestions.length}</h3>
+                        <button onclick="resetQuiz()" class="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-display font-bold text-base shadow cursor-pointer">
+                            🔄 Play Again
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function resetQuiz() {
+            playInstantTone('pop');
+            currentQuizIndex = 0;
+            quizScore = 0;
+            document.getElementById('quiz-score').textContent = `0 / ${quizQuestions.length}`;
+            document.getElementById('quiz-card').innerHTML = `
+                <div class="flex items-center justify-between text-xs font-extrabold text-slate-500 uppercase">
+                    <span id="quiz-q-number">Question 1 / 8</span>
+                    <span id="quiz-q-category" class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Rule Check</span>
+                </div>
+                <div id="quiz-prompt" class="font-display text-2xl sm:text-3xl font-bold text-slate-900 text-center py-2"></div>
+                <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                <div id="quiz-explanation" class="hidden rounded-2xl p-4 border-2 font-display font-bold text-base text-center"></div>
+                <div class="flex justify-end">
+                    <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-display font-bold text-base shadow cursor-pointer">
+                        Next ➔
+                    </button>
+                </div>
+            `;
+            renderQuizQuestion();
+        }
+
+        window.onload = function () {
+            initZeroDelayAudio();
+            traceSpellingFlowchart(false);
+            updateNegativeFlowchart(false);
+            renderQuizQuestion();
+        };
+    </script>
+</body>
+</html>
